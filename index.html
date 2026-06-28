@@ -66,9 +66,45 @@
   .card p{color:var(--muted);font-size:.9rem;line-height:1.5}
   footer{margin-top:56px;color:var(--muted);font-size:.82rem;text-align:center}
   footer a{color:var(--accent);text-decoration:none}
+
+  /* 密碼門 */
+  #gate{
+    position:fixed;inset:0;z-index:999;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(1200px 600px at 50% -10%,var(--bg2),var(--bg));
+    gap:18px;padding:20px;
+  }
+  #gate h2{font-size:1.4rem;font-weight:700}
+  #gate .sub{color:var(--muted);font-size:.9rem;margin-top:-6px}
+  #gate form{display:flex;flex-direction:column;gap:14px;width:100%;max-width:300px;margin-top:6px}
+  #gate input[type=password]{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;color:var(--txt);font-size:1rem;text-align:center;letter-spacing:.2em;
+    outline:none;transition:border-color .15s;
+  }
+  #gate input[type=password]:focus{border-color:var(--accent)}
+  #gate .remember{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:.88rem;cursor:pointer}
+  #gate button{
+    background:var(--accent);color:#06122a;border:none;border-radius:12px;
+    padding:13px;font-size:1rem;font-weight:650;cursor:pointer;transition:opacity .15s;
+  }
+  #gate button:hover{opacity:.9}
+  #gate .err{color:#ff6b6b;font-size:.85rem;min-height:1.1em}
+  body.locked main,body.locked header,body.locked footer{display:none}
 </style>
 </head>
-<body>
+<body class="locked">
+  <div id="gate">
+    <h2>🔒 股市雷達</h2>
+    <div class="sub">請輸入密碼進入</div>
+    <form id="gateForm">
+      <input type="password" id="pw" inputmode="numeric" autocomplete="current-password" placeholder="密碼" autofocus>
+      <label class="remember"><input type="checkbox" id="remember" checked> 記住我(這台裝置免再輸入)</label>
+      <button type="submit">進入</button>
+      <div class="err" id="err"></div>
+    </form>
+  </div>
+
   <header>
     <h1>📊 股市雷達</h1>
     <p>選擇要查看的數值儀表板</p>
@@ -81,6 +117,21 @@
   </footer>
 
 <script>
+/* ===== 密碼門(輕量遮罩,非真正安全)=====
+   PW_HASH = SHA-256("你的密碼")。要改密碼:重算雜湊換掉這行即可。 */
+const PW_HASH = "1155b0007068f8e930964e11ee161fe2958854fa8c82746890802b8ec38c9e67";
+const AUTH_KEY = "radar_auth";
+
+async function sha256(s){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+function unlock(){
+  document.body.classList.remove("locked");
+  document.getElementById("gate").remove();
+  renderCards();
+}
+
 /* ────────────────────────────────────────────────
    新增專案:在這個陣列加一筆即可。
    - name / desc / url 必填
@@ -125,22 +176,44 @@ const ICONS = {
   radar: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 13l2 2 5-5"/>',
 };
 
-const grid = document.getElementById("grid");
-PROJECTS.forEach((p, i) => {
-  const [c1, c2] = p.color || PALETTE[i % PALETTE.length];
-  const svg = ICONS[p.icon] || ICONS.chart;
-  const a = document.createElement("a");
-  a.className = "card";
-  a.href = p.url;
-  a.innerHTML =
-    '<div class="icon" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ')">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + svg + '</svg>' +
-    '</div>' +
-    '<h2></h2><p></p>';
-  a.querySelector("h2").textContent = p.name;
-  a.querySelector("p").textContent  = p.desc;
-  grid.appendChild(a);
-});
+function renderCards(){
+  const grid = document.getElementById("grid");
+  PROJECTS.forEach((p, i) => {
+    const [c1, c2] = p.color || PALETTE[i % PALETTE.length];
+    const svg = ICONS[p.icon] || ICONS.chart;
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = p.url;
+    a.innerHTML =
+      '<div class="icon" style="background:linear-gradient(135deg,' + c1 + ',' + c2 + ')">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + svg + '</svg>' +
+      '</div>' +
+      '<h2></h2><p></p>';
+    a.querySelector("h2").textContent = p.name;
+    a.querySelector("p").textContent  = p.desc;
+    grid.appendChild(a);
+  });
+}
+
+/* ===== 啟動:已記住就直接放行,否則掛上密碼門 =====
+   (放在最後,確保 renderCards 用到的 PROJECTS 等已初始化) */
+if (localStorage.getItem(AUTH_KEY) === PW_HASH || sessionStorage.getItem(AUTH_KEY) === PW_HASH) {
+  unlock();
+} else {
+  document.getElementById("gateForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pw  = document.getElementById("pw").value;
+    const err = document.getElementById("err");
+    if (await sha256(pw) === PW_HASH) {
+      const store = document.getElementById("remember").checked ? localStorage : sessionStorage;
+      store.setItem(AUTH_KEY, PW_HASH);
+      unlock();
+    } else {
+      err.textContent = "密碼錯誤";
+      document.getElementById("pw").value = "";
+    }
+  });
+}
 </script>
 </body>
 </html>
