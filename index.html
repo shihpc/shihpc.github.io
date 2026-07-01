@@ -146,16 +146,25 @@ const PROJECTS = [
     icon: "chart",
   },
   {
+    name: "即時類股動態 V2",
+    desc: "秒級即時 · Cloudflare 加速 · 自動刷新",
+    url:  "https://shihpc.github.io/taiwan-flow-live-v2/",
+    icon: "bolt",
+    color: ["#0f3a3a", "#06b6d4"], // 青:標示「即時 / 快」
+  },
+  {
     name: "盤後法人動態",
     desc: "外資 / 投信 / ETF 進出與資金流動",
     url:  "https://shihpc.github.io/taiwan-flows/",
     icon: "flow",
+    color: ["#14532d", "#16a34a"], // 綠(釘原色,不受新卡位移影響)
   },
   {
     name: "綜合動態",
     desc: "買賣超排行 · 融資融券 · 多維選股",
     url:  "https://shihpc.github.io/taiwan-stock-radar/",
     icon: "radar",
+    color: ["#5b2150", "#db2777"], // 粉(釘原色,不受新卡位移影響)
   },
 ];
 
@@ -174,6 +183,7 @@ const ICONS = {
   chart: '<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>',
   flow:  '<path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/>',
   radar: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 13l2 2 5-5"/>',
+  bolt:  '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
 };
 
 function renderCards(){
