@@ -34,7 +34,7 @@
 <!-- CANON:END v1 -->
 
 「股市雷達 · Dashboard Hub」入口站。**純靜態、無建置流程**：站台內容只有一個
-`index.html`（231 行），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
+`index.html`（296 行），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
 `.github/workflows/canon.yml`，只守 CLAUDE.md 頂端的 CANON 區塊，不產出任何東西。
 線上 https://shihpc.github.io/ 。
 
@@ -42,9 +42,13 @@
 
 `index.html` 一檔到底（CSS/JS 內嵌），三段結構：
 
-- 前端密碼門（:120-133）
-- `PROJECTS` 卡片陣列（:141-170）
-- `ICONS` SVG 圖庫（:182-189）＋ `PALETTE` 漸層色盤 ＋ `renderCards()`
+- 前端密碼門（:127-141）
+- `PROJECTS` 卡片陣列（:149-182）
+- `ICONS` SVG 圖庫（:195-201）＋ `PALETTE` 漸層色盤 ＋ `renderCards()`
+- 資料健康狀態列 `loadStatus()`（:223-273）：解鎖後才非同步抓
+  `https://taiwan-flow-v2.shihpc.workers.dev/status`，依卡片 `statusId` 對應
+  `sites[].id` 顯示「● 資料日 MM/DD」；fetch 失敗／逾時（8 秒）／JSON 不合形狀
+  一律靜默降級，不顯示狀態列
 
 ## 四張卡（`index.html:141-170`）
 
@@ -58,14 +62,15 @@
 ## 改動注意
 
 1. **新增站台**＝在 `PROJECTS` 加一筆：`name`／`desc`／`url` 必填；`icon` 要對應
-   `ICONS` 既有 key（新圖示先到 `ICONS`（:182-189）加一個 key → SVG path）；
-   `color` 可省略，省略時由 `PALETTE` 依順序循環分配。
-2. **既有卡的 `color` 是釘死的**：`index.html:154` 註解「綠(釘原色,不受新卡位移影響)」——
+   `ICONS` 既有 key（新圖示先到 `ICONS`（:195-201）加一個 key → SVG path）；
+   `color` 可省略，省略時由 `PALETTE` 依順序循環分配；`statusId` 可省略，
+   填了才會對應 `/status` 顯示健康狀態列。
+2. **既有卡的 `color` 是釘死的**：`index.html:163` 註解「綠(釘原色,不受新卡位移影響)」——
    四張卡都手動指定顏色，就是為了讓新卡插入時既有卡配色不位移。不要為了「統一」而拿掉。
 3. **子站有回程連結硬編 `https://shihpc.github.io/`**（例：taiwan-stock-news）——
    若改動 Hub 網址，必須同步各子站的回程連結。
-4. **密碼門**（:120-133）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
-   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（:121）。
+4. **密碼門**（:127-141）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
+   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（:129）。
    **不要把雜湊值或密碼寫進任何文件、commit message 或對話輸出。**
 
 ## 驗證方式
