@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>股市雷達 · Dashboard Hub</title>
+<meta name="description" content="股市雷達 · Dashboard Hub：台股即時類股、盤後法人、新聞晨報、盤後分析、策略回測入口">
+<meta name="theme-color" content="#0b1120">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://taiwan-flow-v2.shihpc.workers.dev" crossorigin>
 <style>
   :root{
     --bg:#0b1120;
@@ -64,13 +68,16 @@
   .icon svg{width:40px;height:40px}
   .card h2{font-size:1.2rem;font-weight:650;margin-bottom:8px}
   .card p{color:var(--muted);font-size:.9rem;line-height:1.5}
-  /* 資料健康狀態列(解鎖後由 /status 載入;失敗時整行不出現)
+  /* 資料健康狀態列(解鎖後由 /status 載入;失敗時卡片不掛狀態列,改在 #statusMsg 顯示一行「查詢失敗(未知)」)
      圓點色取中等亮度,深色與淺色底皆可辨識 */
   .status{display:flex;align-items:center;gap:6px;margin-top:12px;color:var(--muted);font-size:.8rem}
   .status .dot{width:8px;height:8px;border-radius:50%;flex:none}
   .status .dot.green{background:#22c55e}
   .status .dot.yellow{background:#f59e0b}
   .status .dot.red{background:#ef4444}
+  /* /status 失敗訊息列:中性灰、不帶紅黃綠語意(「查不到」≠「有問題」),預設隱藏 */
+  #statusMsg{margin-top:20px;color:var(--muted);font-size:.8rem;text-align:center}
+  #statusMsg[hidden]{display:none}
   footer{margin-top:56px;color:var(--muted);font-size:.82rem;text-align:center}
   footer a{color:var(--accent);text-decoration:none}
 
@@ -118,6 +125,7 @@
   </header>
 
   <main class="grid" id="grid"></main>
+  <div id="statusMsg" hidden></div>
 
   <footer>
     資料來源:FinMind · <a href="https://github.com/shihpc">github.com/shihpc</a>
@@ -137,7 +145,7 @@ function unlock(){
   document.body.classList.remove("locked");
   document.getElementById("gate").remove();
   renderCards();
-  loadStatus(); // 解鎖後才抓資料健康狀態(未解鎖不發請求;失敗靜默降級)
+  loadStatus(); // 解鎖後才抓資料健康狀態(未解鎖不發請求;失敗顯示「查詢失敗(未知)」)
 }
 
 /* ────────────────────────────────────────────────
@@ -229,20 +237,49 @@ function renderCards(){
 
 /* ===== 資料健康狀態列 =====
    解鎖後向 Worker 抓 /status,逐卡顯示「● 資料日 MM/DD」;
-   fetch 失敗、逾時(8 秒)或 JSON 不合形狀 → 整段靜默略過,不影響卡片。 */
+   fetch 失敗、逾時(8 秒)、非 2xx 或 JSON 不合形狀 → 卡片不掛狀態列,
+   改在 #statusMsg 顯示中性灰「資料狀態:查詢失敗(未知)」,讓使用者分得出
+   「查不到」與「一切正常」;若 localStorage 有上次成功時間則附「上次成功 MM/DD HH:MM」。
+   成功時把 ISO 時間寫進 localStorage key hub_status_ok_at(存取皆 try/catch,不可用就略過)。 */
 const STATUS_URL = "https://taiwan-flow-v2.shihpc.workers.dev/status";
 const STATUS_LEVELS = { green: 1, yellow: 2, red: 3 }; // 數字越大越差
+const STATUS_OK_KEY = "hub_status_ok_at";
+
+function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); } catch (e) { /* 私密模式/配額/被封鎖:略過 */ } }
+
+function pad2(n){ return String(n).padStart(2, "0"); }
+function showStatusFail(){
+  const el = document.getElementById("statusMsg");
+  if (!el) return;
+  let text = "資料狀態:查詢失敗(未知)";
+  const iso = lsGet(STATUS_OK_KEY);
+  const t = iso ? new Date(iso) : null;
+  if (t && !isNaN(t.getTime())) {
+    text += " · 上次成功 " + pad2(t.getMonth() + 1) + "/" + pad2(t.getDate()) +
+            " " + pad2(t.getHours()) + ":" + pad2(t.getMinutes());
+  }
+  el.textContent = text;
+  el.hidden = false;
+}
 
 async function loadStatus(){
+  let data;
   try {
     const ctrl  = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 8000); // 逾時 8 秒即放棄
     const res   = await fetch(STATUS_URL, { signal: ctrl.signal });
     clearTimeout(timer);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data || !Array.isArray(data.sites)) return;
+    if (!res.ok) return showStatusFail();
+    data = await res.json();
+    if (!data || !Array.isArray(data.sites)) return showStatusFail();
+  } catch (e) {
+    /* 網路失敗、逾時中斷、JSON 解析失敗:不拋錯,改顯示「查詢失敗(未知)」 */
+    return showStatusFail();
+  }
+  lsSet(STATUS_OK_KEY, new Date().toISOString()); // 形狀合格才算成功
 
+  try {
     // 建 id → site 索引(略過形狀不對的項目)
     const byId = {};
     data.sites.forEach(s => { if (s && typeof s.id === "string") byId[s.id] = s; });
@@ -275,7 +312,7 @@ async function loadStatus(){
       card.appendChild(div);
     });
   } catch (e) {
-    /* 網路失敗、逾時中斷、JSON 解析失敗:優雅降級,不顯示狀態列、不拋錯 */
+    /* 渲染階段例外:資料已取得,不當成查詢失敗,靜默略過 */
   }
 }
 
