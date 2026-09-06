@@ -34,7 +34,7 @@
 <!-- CANON:END v1 -->
 
 「股市雷達 · Dashboard Hub」入口站。**純靜態、無建置流程**：站台內容只有一個
-`index.html`（296 行），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
+`index.html`（340 行），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
 `.github/workflows/canon.yml`，只守 CLAUDE.md 頂端的 CANON 區塊，不產出任何東西。
 線上 https://shihpc.github.io/ 。
 
@@ -42,15 +42,18 @@
 
 `index.html` 一檔到底（CSS/JS 內嵌），三段結構：
 
-- 前端密碼門（:127-141）
-- `PROJECTS` 卡片陣列（:149-182）
-- `ICONS` SVG 圖庫（:195-201）＋ `PALETTE` 漸層色盤 ＋ `renderCards()`
-- 資料健康狀態列 `loadStatus()`（:223-273）：解鎖後才非同步抓
+- `<head>` 門面 meta（:7-10）：`description`／`theme-color`（取 `--bg` 的 `#0b1120`）／
+  📡 SVG data URI favicon／`preconnect` 到 Worker
+- 前端密碼門（:135-149；啟動判斷在 :319-337）
+- `PROJECTS` 卡片陣列（:157-197）
+- `ICONS` SVG 圖庫（:210-216）＋ `PALETTE` 漸層色盤（:200-207）＋ `renderCards()`（:218-236）
+- 資料健康狀態列 `loadStatus()`（:238-317，含 `showStatusFail()` :252-264）：解鎖後才非同步抓
   `https://taiwan-flow-v2.shihpc.workers.dev/status`，依卡片 `statusId` 對應
-  `sites[].id` 顯示「● 資料日 MM/DD」；fetch 失敗／逾時（8 秒）／JSON 不合形狀
-  一律靜默降級，不顯示狀態列
+  `sites[].id` 顯示「● 資料日 MM/DD」；fetch 失敗／逾時（8 秒）／非 2xx／JSON 不合形狀
+  → 卡片不掛狀態列，改在 `#statusMsg`（:128）顯示一行中性灰
+  「資料狀態：查詢失敗（未知）」（語意見「改動注意」第 5 條）
 
-## 四張卡（`index.html:149-182`）
+## 五張卡（`index.html:157-197`）
 
 | 卡片 | 連往 |
 |------|------|
@@ -58,25 +61,32 @@
 | 盤後法人動態 | https://shihpc.github.io/taiwan-flows/ |
 | 新聞晨報 | https://shihpc.github.io/taiwan-stock-news/ |
 | 盤後分析 | https://shihpc.github.io/postmkt/ |
+| 策略回測 | https://shihpc.github.io/taiwan-backtest/ （`index.html:190-196`，無 `statusId`，不顯示狀態列） |
 
 ## 改動注意
 
 1. **新增站台**＝在 `PROJECTS` 加一筆：`name`／`desc`／`url` 必填；`icon` 要對應
-   `ICONS` 既有 key（新圖示先到 `ICONS`（:195-201）加一個 key → SVG path）；
+   `ICONS` 既有 key（新圖示先到 `ICONS`（:210-216）加一個 key → SVG path）；
    `color` 可省略，省略時由 `PALETTE` 依順序循環分配；`statusId` 可省略，
    填了才會對應 `/status` 顯示健康狀態列。
-2. **既有卡的 `color` 是釘死的**：`index.html:163` 註解「綠(釘原色,不受新卡位移影響)」——
-   四張卡都手動指定顏色，就是為了讓新卡插入時既有卡配色不位移。不要為了「統一」而拿掉。
+2. **既有卡的 `color` 是釘死的**：`index.html:171` 註解「綠(釘原色,不受新卡位移影響)」——
+   五張卡都手動指定顏色，就是為了讓新卡插入時既有卡配色不位移。不要為了「統一」而拿掉。
 3. **子站有回程連結硬編 `https://shihpc.github.io/`**（例：taiwan-stock-news）——
    若改動 Hub 網址，必須同步各子站的回程連結。
-4. **密碼門**（:127-141）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
-   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（:129）。
+4. **密碼門**（:135-149）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
+   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（:137）。
    **不要把雜湊值或密碼寫進任何文件、commit message 或對話輸出。**
+5. **狀態列失敗顯示「查詢失敗（未知）」是刻意的，不要改回靜默**：`/status` 查不到
+   （逾時／非 2xx／形狀不合／網路例外）時 `showStatusFail()` 在 `#statusMsg` 顯示中性灰
+   「資料狀態：查詢失敗（未知）」——「未知」＝不知道資料好壞，**不是**資料異常，所以不用
+   紅黃綠。`localStorage` key `hub_status_ok_at` 只在 `/status` 回應**形狀合格**時寫入
+   ISO 時間（不代表各站資料綠燈），失敗時若讀得到就附「上次成功 MM/DD HH:MM」（瀏覽器
+   本地時區）。存取 `localStorage` 全部 try/catch，被封鎖時只少那句、不影響顯示。
 
 ## 驗證方式
 
 ```bash
-python -m http.server 8000   # 開 localhost:8000，過密碼門後確認四張卡渲染且連結可點
+python -m http.server 8000   # 開 localhost:8000，過密碼門後確認五張卡渲染且連結可點
 ```
 
 無測試、無 CI；改完 push 到 main 即由 GitHub Pages 上線。
