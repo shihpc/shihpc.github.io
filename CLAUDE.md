@@ -34,7 +34,7 @@
 <!-- CANON:END v1 -->
 
 「股市雷達 · Dashboard Hub」入口站。**純靜態、無建置流程**：站台內容只有一個
-`index.html`（340 行），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
+`index.html`（573 行，2026-09-07 實測），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
 `.github/workflows/canon.yml`，只守 CLAUDE.md 頂端的 CANON 區塊，不產出任何東西。
 線上 https://shihpc.github.io/ 。
 
@@ -73,7 +73,7 @@
 
 - **誠實原則（不可淡化）**：**這不是買賣訊號，只是相對變化提醒**；`MYCHG_LOT_TH`（±100 張，:378）與
   `MYCHG_CHG_PCT_TH`（±3%，:379）是**顯示用可調常數、無回測依據**（CANON 第 8 條）。畫面 `.note`
-  最後一句（`loadMyChanges()` 內 `notes.push`，:545-546）**逐字**含
+  倒數第二句（`loadMyChanges()` 內 `notes.push`，:545-546；最後一句是 `:547` 的資料源說明）**逐字**含
   `為顯示用可調常數、無回測依據,不是買賣訊號,只是相對變化提醒`（逗號同 index.html 原樣為半形）
   ——改門檻要連畫面文字一起改，不要改成「訊號／建議」語氣。
 - **隱私（CANON 第 1 條、postmkt 隱私鐵則）**：持股只從同 origin `localStorage["pm_holdings"]`
