@@ -1,12 +1,12 @@
 # CLAUDE.md — shihpc.github.io 接手速覽
 
 <!-- CANON:BEGIN v1 -->
-<!-- 唯一事實來源＝shihpc/claude-harness 的 CANON.md。以下區塊在五個 repo 的 CLAUDE.md 頂端
+<!-- 唯一事實來源＝shihpc/claude-harness 的 CANON.md。以下區塊在六個 repo 的 CLAUDE.md 頂端
      有 byte-identical 逐字副本，由各 repo 的 .github/workflows/canon.yml 守門（比對 sha256）。
-     改動流程：先改 claude-harness/CANON.md → 跑 tools/sync_canon.py 同步五份 → 更新守門 hash。
+     改動流程：先改 claude-harness/CANON.md → 跑 tools/sync_canon.py 同步六份 → 更新守門 hash。
      不要只改單一 repo，CI 會擋下來。 -->
 
-## 通用工作鐵律（五個 repo 逐字相同，勿單獨修改）
+## 通用工作鐵律（六個 repo 逐字相同，勿單獨修改）
 
 1. **機密**：token／金鑰只存在不受版控的本機設定或受控 secrets（`.env`／Actions secret／
    `wrangler secret`），絕不寫進會 commit 的檔案、log 或對話輸出。commit 前掃 staged 內容，
@@ -72,7 +72,7 @@
 | 盤後法人動態 | https://shihpc.github.io/taiwan-flows/ |
 | 新聞晨報 | https://shihpc.github.io/taiwan-stock-news/ |
 | 盤後分析 | https://shihpc.github.io/postmkt/ |
-| 策略回測 | https://shihpc.github.io/taiwan-backtest/ （`index.html:220-226`，無 `statusId`，不顯示狀態列） |
+| 策略回測 | https://shihpc.github.io/taiwan-backtest/ （`PROJECTS` 內最後一筆；**2026-09-07 起補上 `statusId:"backtest"`**——`/status` 的 backtest 站由 taiwan-flow-live-v2 提供，`loadStatus()` 對缺站本來就 `return` 靜默不掛狀態列，故先加不會壞） |
 
 ## 我的異動（`index.html:349-550`，2026-09-07 批次三 #18）
 
