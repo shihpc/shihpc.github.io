@@ -43,20 +43,20 @@
 `index.html` 一檔到底（CSS/JS 內嵌），三段結構：
 
 - `<head>` 門面 meta（:7-11）：`description`／`theme-color`（取 `--bg` 的 `#0b1120`）／
-  📡 SVG data URI favicon／`preconnect` 到 Worker 與 `raw.githubusercontent.com`（:11，供「我的異動」）
-- 前端密碼門（:163-178；啟動判斷在 :498-516）
-- `PROJECTS` 卡片陣列（:186-226）
-- `ICONS` SVG 圖庫（:239-245）＋ `PALETTE` 漸層色盤（:229-236）＋ `renderCards()`（:247-265）
-- 資料健康狀態列 `loadStatus()`（:267-346，含 `showStatusFail()` :281-293）：解鎖後才非同步抓
+  📡 SVG data URI favicon／`preconnect` 到 Worker（:10）與 `raw.githubusercontent.com`（:11，供「我的異動」）
+- 前端密碼門（:164-179；啟動判斷在 :552-570）
+- `PROJECTS` 卡片陣列（:187-227）
+- `ICONS` SVG 圖庫（:240-246）＋ `PALETTE` 漸層色盤（:230-237）＋ `renderCards()`（:248-266）
+- 資料健康狀態列 `loadStatus()`（:296-347，含 `showStatusFail()` :282-294）：解鎖後才非同步抓
   `https://taiwan-flow-v2.shihpc.workers.dev/status`，依卡片 `statusId` 對應
   `sites[].id` 顯示「● 資料日 MM/DD」；fetch 失敗／逾時（8 秒）／非 2xx／JSON 不合形狀
-  → 卡片不掛狀態列，改在 `#statusMsg`（:149）顯示一行中性灰
+  → 卡片不掛狀態列，改在 `#statusMsg`（:150）顯示一行中性灰
   「資料狀態：查詢失敗（未知）」（語意見「改動注意」第 5 條）
-- **「我的異動」可收合區**（HTML `<section id="mychg">` :151-156、CSS :83-101、
-  JS :348-496）：解鎖後掛在五張卡與 `#statusMsg` 之下，`unlock()` 呼叫 `loadMyChanges()`（:177）。
+- **「我的異動」可收合區**（HTML `<section id="mychg">` :152-157、CSS :82-102、
+  JS :349-550）：解鎖後掛在五張卡與 `#statusMsg` 之下，`unlock()` 呼叫 `loadMyChanges()`（:178）。
   細節見下方「我的異動」節。
 
-## 五張卡（`index.html:186-226`）
+## 五張卡（`index.html:187-227`）
 
 | 卡片 | 連往 |
 |------|------|
@@ -64,50 +64,74 @@
 | 盤後法人動態 | https://shihpc.github.io/taiwan-flows/ |
 | 新聞晨報 | https://shihpc.github.io/taiwan-stock-news/ |
 | 盤後分析 | https://shihpc.github.io/postmkt/ |
-| 策略回測 | https://shihpc.github.io/taiwan-backtest/ （`index.html:219-225`，無 `statusId`，不顯示狀態列） |
+| 策略回測 | https://shihpc.github.io/taiwan-backtest/ （`index.html:220-226`，無 `statusId`，不顯示狀態列） |
 
-## 我的異動（`index.html:348-496`，2026-09-07 批次三 #18）
+## 我的異動（`index.html:349-550`，2026-09-07 批次三 #18）
 
 解鎖後、五張卡之下的可收合區塊（`<details id="mychgBox">`），列出「我持有的股票今天有沒有
 相對明顯的變化」，一眼看完再決定要不要進子站。
 
-- **誠實原則（不可淡化）**：**這不是買賣訊號，只是相對變化提醒**；`MYCHG_LOT_TH`（±100 張）與
-  `MYCHG_CHG_PCT_TH`（±3%）是**顯示用可調常數、無回測依據**（CANON 第 8 條），畫面上的
-  `.note` 也逐字這樣寫，改門檻要連畫面文字一起改，不要改成「訊號／建議」語氣。
+- **誠實原則（不可淡化）**：**這不是買賣訊號，只是相對變化提醒**；`MYCHG_LOT_TH`（±100 張，:378）與
+  `MYCHG_CHG_PCT_TH`（±3%，:379）是**顯示用可調常數、無回測依據**（CANON 第 8 條）。畫面 `.note`
+  最後一句（`loadMyChanges()` 內 `notes.push`，:545-546）**逐字**含
+  `為顯示用可調常數、無回測依據,不是買賣訊號,只是相對變化提醒`（逗號同 index.html 原樣為半形）
+  ——改門檻要連畫面文字一起改，不要改成「訊號／建議」語氣。
 - **隱私（CANON 第 1 條、postmkt 隱私鐵則）**：持股只從同 origin `localStorage["pm_holdings"]`
   （postmkt 寫入，本站**唯讀**，格式 `[{c,sh,cost}]`）讀取，**絕不放進任何網路請求的 URL、
-  header 或 body**。本節唯一外部請求是無參數的 GET
-  `raw.githubusercontent.com/shihpc/taiwan-flows/main/data/latest.json`（全市場排行，與持股無關）。
+  header 或 body**。本節的外部請求全是**無參數的固定 GET**（下方三支 URL，內容與持股無關），
+  比對完全在瀏覽器端做（Playwright 逐請求稽核 URL＋body＋headers，2026-09-07 實測零命中）。
+- **資料源（2026-09-07 換掉原本只讀 `latest.json` 的做法）**：
+  | 檔案 | 角色 | 原始／線上 gzip（2026-09-07 curl 實測 `content-length`） |
+  |------|------|------|
+  | `data/status.json` | 先取資料日（`sources.daily`，退回 `date`）組出 daily 檔名 | 500 B／**290 B** |
+  | `data/daily/<YYYYMMDD>.json` | **主資料**，全市場逐檔 2650 列 | 256,209 B／**81,686 B** |
+  | `data/latest.json` | **選配**，只補股名（daily 無股名欄），與主流程並行、失敗不影響 | 108,341 B／**19,333 B** |
+  三支合計線上約 **99 KB**（`cache-control: max-age=300`）。daily 的 `cols` 含
+  `code`／`chg_pct`／`f_net`／`t_net`＝畫面三欄剛好齊備（欄位語意見 `taiwan-flows/CLAUDE.md`
+  daily schema）。**刻意不抓 `meta.json`（270KB）**：只為股名不值得，查不到就顯示代號。
+- **覆蓋率：全市場 100%（2650/2650）**。舊版只讀 `latest.json`＝各榜前 30 名（ETF 榜前 20）、
+  去重後僅 **294 檔（11.1%）**；以本模組門檻實測 2026-09-07 達門檻者 **911 檔，其中 687 檔（75.4%）
+  在 `latest.json` 查不到**，卻被寫成「無顯著異動」——**缺資料卻呈現正常**，與 taiwan-flows
+  `no_data` 靜默、入口站 `/status` 失敗靜默同型，已消滅。系統性盲區是槓桿／主動式 ETF 與中型股
+  （例：`00637L` 當日外資 −954 張，舊版顯示為「無顯著異動」）。
+- **三種狀態必須分得開（必修核心）**：三分在 `loadMyChanges()` :509-520、出句在 :538-548，
+  `.note` 一行一句以 `<br>` 分行（:548），**三句不可合併成同一個字串**：
+  1. **有資料且達門檻** → 列進表格（最多 `MYCHG_MAX_ROWS`＝5 檔，:380；超出寫「另 M 檔已達門檻但未列出」）
+  2. **有資料但未達門檻** → 「其餘 N 檔未達門檻（當日資料查得到，只是變化不到門檻）」
+  3. **代號不在當日 daily 檔** → 「M 檔在當日資料中查無此代號（已下市/停牌/代號有誤），不代表沒有異動」
+     （`myChgDailyIndex()` :420-438 只為查得到的代號建 key，呼叫端據有無 key 三分）
+  現在有全市場資料，第 3 類會很少，但仍**必須與第 2 類分開講**，否則使用者無從分辨。
 - **無持股時整節維持 `hidden`**（`loadMyChanges()` 直接 return），入口與原本一模一樣。
 - **開合狀態**存 `localStorage` key `hub_mychg_open`（`"1"`／`"0"`，**預設展開**），
   存取走既有 `lsGet`／`lsSet`（try/catch）。
-- **資料口徑**（`myChgIndex()` :388-409，欄位語意見 `taiwan-flows/CLAUDE.md`）：`foreign`／`trust`
-  榜的 `net_lots` 是該法人當日淨買賣（張）、`sync`／`oppose` 榜同列直接帶 `f_net`／`t_net`，
-  `etf` 榜只有金額（千元）不換算張數，只取股名與 `chg_pct`。
-  **覆蓋率限制（要誠實標示，勿當成「沒異動」）**：`latest.json` 只有各榜前 30 名（ETF 榜前 20），
-  沒進榜的個股在這裡查不到法人買賣超，會被歸進「其餘 N 檔無顯著異動」那一行。
-- **失敗行為**：fetch 8 秒逾時／非 2xx／JSON 不合形狀 → `#mychgBody` 顯示「無法取得異動資料」，
-  **不影響五張卡與 `/status` 狀態列**（兩條路徑各自 try/catch，互不牽連）。
-- **XSS**：本節新增標準 `esc()`（:366-368，逃 `&<>"'`），持股代號（使用者可控）與 `latest.json`
-  股名全部過它才拼進 `innerHTML`；連結 href 為 `https://shihpc.github.io/postmkt/#tab=diag&code=`
-  ＋`encodeURIComponent(代號)`（postmkt 的 hash 路由，該格式須維持可用，見
-  `postmkt/index.html` hash 路由註解）。
-- 驗收（Playwright，2026-09-07 實測 6/6 PASS、pageerror 零）：無持股→整節不出現／3 檔假持股＋
-  route 假 `latest.json`→列出異動檔且連結格式正確＋「其餘 N 檔無顯著異動」／HTTP 500 與逾時→
-  「無法取得異動資料」且五張卡與狀態列照常／收合狀態 reload 保留／代號含 `<img onerror>` 不執行。
+- **失敗行為**：`status.json` 或 daily 任一支 fetch 8 秒逾時／非 2xx／JSON 不合形狀
+  → `#mychgBody` 顯示「無法取得異動資料」，**不得靜默當成無異動**；`latest.json` 失敗只讓股名
+  退回顯示代號，不影響主流程。三者皆**不影響五張卡與 `/status` 狀態列**（各自 try/catch）。
+- **XSS**：本節新增標準 `esc()`（:384-386，逃 `&<>"'`），持股代號（使用者可控）與 `latest.json`
+  股名全部過它才拼進 `innerHTML`（`.note` 也是逐句 `esc()` 後才用 `<br>` 串接）；連結 href 為
+  `https://shihpc.github.io/postmkt/#tab=diag&code=`＋`encodeURIComponent(代號)`（postmkt 的
+  hash 路由，該格式須維持可用，見 `postmkt/index.html` hash 路由註解）。
+- 驗收（Playwright，2026-09-07 實測 **17/17 PASS、pageerror 零**）：無持股→整節不出現／三種狀態
+  各自正確顯示且兩句文案分行／連結格式正確／`status.json` 500、daily 500、daily 逾時三種都顯示
+  「無法取得異動資料」且五張卡與狀態列照常／`latest.json` 500 時股名退回代號／代號與股名含
+  `<img onerror>` 皆不執行（以字面文字顯示）／收合狀態 reload 保留／所有 request 的 URL＋body＋
+  headers 不含持股代號或 `pm_holdings`。另以 curl 取回的**真實線上三檔**重放實測（2026-09-07）：
+  `2330` 與 `00637L` 達門檻列出（`00637L` 不在 `latest.json` → 名稱欄顯示代號）、`6949` 歸「未達門檻」、
+  `9999` 歸「查無此代號」，四檔各自落在正確狀態。
+  **沙箱限制**：本容器的 headless Chromium 無法直連外網，線上驗證走 curl 取檔＋`page.route` 重放真檔。
 
 ## 改動注意
 
 1. **新增站台**＝在 `PROJECTS` 加一筆：`name`／`desc`／`url` 必填；`icon` 要對應
-   `ICONS` 既有 key（新圖示先到 `ICONS`（:239-245）加一個 key → SVG path）；
+   `ICONS` 既有 key（新圖示先到 `ICONS`（:240-246）加一個 key → SVG path）；
    `color` 可省略，省略時由 `PALETTE` 依順序循環分配；`statusId` 可省略，
    填了才會對應 `/status` 顯示健康狀態列。
-2. **既有卡的 `color` 是釘死的**：`index.html:200` 註解「綠(釘原色,不受新卡位移影響)」——
+2. **既有卡的 `color` 是釘死的**：`index.html:201` 註解「綠(釘原色,不受新卡位移影響)」——
    五張卡都手動指定顏色，就是為了讓新卡插入時既有卡配色不位移。不要為了「統一」而拿掉。
 3. **子站有回程連結硬編 `https://shihpc.github.io/`**（例：taiwan-stock-news）——
    若改動 Hub 網址，必須同步各子站的回程連結。
-4. **密碼門**（:163-178）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
-   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（:165）。
+4. **密碼門**（:164-179）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
+   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（:166）。
    **不要把雜湊值或密碼寫進任何文件、commit message 或對話輸出。**
 5. **狀態列失敗顯示「查詢失敗（未知）」是刻意的，不要改回靜默**：`/status` 查不到
    （逾時／非 2xx／形狀不合／網路例外）時 `showStatusFail()` 在 `#statusMsg` 顯示中性灰
