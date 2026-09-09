@@ -42,7 +42,7 @@
 <!-- CANON:END v1 -->
 
 「股市雷達 · Dashboard Hub」入口站。**純靜態、無建置流程**：站台內容只有一個
-`index.html`（347 行，2026-09-09 實測），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
+`index.html`（348 行，2026-09-09 `wc -l` 實測），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
 `.github/workflows/canon.yml`，只守 CLAUDE.md 頂端的 CANON 區塊，不產出任何東西。
 線上 https://shihpc.github.io/ 。
 
@@ -50,23 +50,29 @@
 
 `index.html` 一檔到底（CSS/JS 內嵌），三段結構：
 
-- `<head>` 門面 meta（:7-10）：`description`／`theme-color`（取 `--bg` 的 `#0b1120`）／
-  📡 SVG data URI favicon／`preconnect` 到 Worker（:10）。**`raw.githubusercontent.com` 的
+- `<head>` 門面 meta（grep `name="description"`／`name="theme-color"`／`rel="icon"`／
+  `rel="preconnect"`，四行相鄰）：`description`／`theme-color`（取 `--bg` 的 `#0b1120`）／
+  📡 SVG data URI favicon／`preconnect` 到 Worker。**`raw.githubusercontent.com` 的
   preconnect 已於 2026-09-09 隨「我的異動」一併移除**——它只服務那一段，`/status` 走 Worker
   是另一條；日後若又有需求要自己加回來。
-- 前端密碼門（:116-131；啟動判斷在 :327-345）
-- `PROJECTS` 卡片陣列（:164-205）
-- `ICONS` SVG 圖庫（:218-224）＋ `PALETTE` 漸層色盤（:208-215）＋ `renderCards()`（:226-244）
-- 資料健康狀態列 `loadStatus()`（:274-325，含 `showStatusFail()` :260-272）：解鎖後才非同步抓
+- 前端密碼門：HTML 是 grep `<div id="gate">` 那個區塊，JS 是 grep `/* ===== 密碼門` 起至
+  `function unlock` 結尾止；啟動判斷在 grep `/* ===== 啟動` 起的區塊（檔案最末）
+- `PROJECTS` 卡片陣列（grep `const PROJECTS`）
+- `ICONS` SVG 圖庫（grep `const ICONS`）＋ `PALETTE` 漸層色盤（grep `const PALETTE`）
+  ＋ `renderCards()`（grep `function renderCards`）
+- 資料健康狀態列 `loadStatus()`（grep `function loadStatus`，含 `showStatusFail()`／
+  grep `function showStatusFail`）：解鎖後才非同步抓
   `https://taiwan-flow-v2.shihpc.workers.dev/status`，依卡片 `statusId` 對應
   `sites[].id` 顯示「● 資料日 MM/DD」；fetch 失敗／逾時（8 秒）／非 2xx／JSON 不合形狀
-  → 卡片不掛狀態列，改在 `#statusMsg`（:133）顯示一行中性灰
+  → 卡片不掛狀態列，改在 `#statusMsg`（grep `id="statusMsg"`）顯示一行中性灰
   「資料狀態：查詢失敗（未知）」（語意見「改動注意」第 5 條）
-- **「持股異動」搬遷提示列** `<p id="moved">`（:135，CSS :81-84）：一行靜態連結，指到
+- **「持股異動」搬遷提示列** `<p id="moved">`（grep `<p id="moved">`；CSS 是 grep
+  `#moved{margin-top` 起的三條規則，含 `#moved a:hover`，其上兩行為說明註解）：一行靜態連結，指到
   `https://shihpc.github.io/postmkt/#tab=mychg`。**純 HTML、無 JS、無 fetch**，由
-  `body.locked #moved{display:none}`（:112）與五張卡一起藏在密碼門後。見下方「我的異動（已搬走）」節。
+  `body.locked #moved{display:none}`（grep `body.locked`，全檔唯一一行）與五張卡一起藏在密碼門後。
+  見下方「我的異動（已搬走）」節。
 
-## 五張卡（`index.html:164-205`）
+## 五張卡（`index.html` grep `const PROJECTS`）
 
 | 卡片 | 連往 |
 |------|------|
@@ -89,7 +95,8 @@
   `loadMyChanges()` 呼叫、JS 整段（`HOLD_KEY`／`MYCHG_*` 常數／`esc`／`myHoldings`／
   `myChgFetchJson`／`myChgDailyIndex`／`myChgNameIndex`／`myChgSignificant`／`myChgNum`／
   `loadMyChanges`），以及 `raw.githubusercontent.com` 的 `preconnect`（加它的唯一理由就是這一段）。
-  共 −234／+7 行，`index.html` 574 → 347 行。
+  共 −234／+8 行，`index.html` 574 → 348 行
+  （`git diff --numstat a30d5fa^ a30d5fa -- index.html` 與 `wc -l` 實測）。
 - **刻意保留**：`lsGet`／`lsSet`（雖然定義在 `loadStatus` 區塊裡，但 `STATUS_OK_KEY`
   也在用，**不是** mychg 專屬）、`loadStatus()`／`showStatusFail()`／`PROJECTS`／
   `renderCards()`／密碼門，全部行為不變。
@@ -110,15 +117,15 @@
 ## 改動注意
 
 1. **新增站台**＝在 `PROJECTS` 加一筆：`name`／`desc`／`url` 必填；`icon` 要對應
-   `ICONS` 既有 key（新圖示先到 `ICONS`（:240-246）加一個 key → SVG path）；
+   `ICONS` 既有 key（新圖示先到 `ICONS`（grep `const ICONS`）加一個 key → SVG path）；
    `color` 可省略，省略時由 `PALETTE` 依順序循環分配；`statusId` 可省略，
    填了才會對應 `/status` 顯示健康狀態列。
-2. **既有卡的 `color` 是釘死的**：`index.html:178` 註解「綠(釘原色,不受新卡位移影響)」——
+2. **既有卡的 `color` 是釘死的**：`index.html` grep `釘原色` 那行註解「綠(釘原色,不受新卡位移影響)」——
    五張卡都手動指定顏色，就是為了讓新卡插入時既有卡配色不位移。不要為了「統一」而拿掉。
 3. **子站有回程連結硬編 `https://shihpc.github.io/`**（例：taiwan-stock-news）——
    若改動 Hub 網址，必須同步各子站的回程連結。
-4. **密碼門**（:116-131）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
-   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（:144）。
+4. **密碼門**（grep `/* ===== 密碼門`）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
+   改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（grep `const PW_HASH`）。
    **不要把雜湊值或密碼寫進任何文件、commit message 或對話輸出。**
 5. **狀態列失敗顯示「查詢失敗（未知）」是刻意的，不要改回靜默**：`/status` 查不到
    （逾時／非 2xx／形狀不合／網路例外）時 `showStatusFail()` 在 `#statusMsg` 顯示中性灰
