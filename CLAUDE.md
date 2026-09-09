@@ -48,7 +48,7 @@
 
 ## 佈局
 
-`index.html` 一檔到底（CSS/JS 內嵌），三段結構：
+`index.html` 一檔到底（CSS/JS 內嵌），**六段結構**（2026-09-09 更正：原寫「三段」但其下一直是 6 個項目，是加項目時漏改的計數）：
 
 - `<head>` 門面 meta（grep `name="description"`／`name="theme-color"`／`rel="icon"`／
   `rel="preconnect"`，四行相鄰）：`description`／`theme-color`（取 `--bg` 的 `#0b1120`）／
