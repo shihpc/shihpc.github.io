@@ -8,7 +8,6 @@
 <meta name="theme-color" content="#0b1120">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://taiwan-flow-v2.shihpc.workers.dev" crossorigin>
-<link rel="preconnect" href="https://raw.githubusercontent.com">
 <style>
   :root{
     --bg:#0b1120;
@@ -79,27 +78,11 @@
   /* /status 失敗訊息列:中性灰、不帶紅黃綠語意(「查不到」≠「有問題」),預設隱藏 */
   #statusMsg{margin-top:20px;color:var(--muted);font-size:.8rem;text-align:center}
   #statusMsg[hidden]{display:none}
-  /* 我的異動(批次三 #18):解鎖後、五張卡之下的可收合區;無持股時整節 hidden,入口維持原樣。
-     持股只從同 origin localStorage("pm_holdings") 唯讀,絕不進任何網路請求。
-     .note 一行一句(<br> 分行),三種狀態各自成句,不可合併。 */
-  #mychg{width:100%;max-width:920px;margin-top:28px}
-  #mychg[hidden]{display:none}
-  #mychg details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
-  #mychg summary{cursor:pointer;font-size:.95rem;font-weight:650;list-style:none}
-  #mychg summary::-webkit-details-marker{display:none}
-  #mychg summary::before{content:"\25b8 ";color:var(--muted)}
-  #mychg details[open] summary::before{content:"\25be "}
-  #mychg .sub{color:var(--muted);font-weight:400;font-size:.8rem;margin-left:8px}
-  #mychg .body{margin-top:12px;overflow-x:auto}
-  #mychg table{border-collapse:collapse;width:100%;font-size:.82rem;white-space:nowrap}
-  #mychg th,#mychg td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line)}
-  #mychg th{color:var(--muted);font-weight:600}
-  #mychg th:first-child,#mychg td:first-child,#mychg th:nth-child(2),#mychg td:nth-child(2){text-align:left}
-  #mychg td a{color:var(--accent);text-decoration:none}
-  #mychg td a:hover{text-decoration:underline}
-  #mychg .up{color:#f87171}
-  #mychg .down{color:#4ade80}
-  #mychg .note{color:var(--muted);font-size:.78rem;margin-top:10px;line-height:1.6}
+  /* 「持股異動」搬遷提示列:原「我的異動」區塊已於 2026-09-09 移除,改由 postmkt 的「持股異動」tab 承接
+     (原表格 6 欄,手機只看得到前 2 欄;postmkt 那邊是 4 欄版面) */
+  #moved{margin-top:20px;color:var(--muted);font-size:.82rem;text-align:center;line-height:1.6}
+  #moved a{color:var(--accent);text-decoration:none}
+  #moved a:hover{text-decoration:underline}
   footer{margin-top:56px;color:var(--muted);font-size:.82rem;text-align:center}
   footer a{color:var(--accent);text-decoration:none}
 
@@ -126,7 +109,7 @@
   }
   #gate button:hover{opacity:.9}
   #gate .err{color:#ff6b6b;font-size:.85rem;min-height:1.1em}
-  body.locked main,body.locked header,body.locked footer{display:none}
+  body.locked main,body.locked header,body.locked footer,body.locked #moved{display:none}
 </style>
 </head>
 <body class="locked">
@@ -149,12 +132,7 @@
   <main class="grid" id="grid"></main>
   <div id="statusMsg" hidden></div>
 
-  <section id="mychg" hidden>
-    <details id="mychgBox">
-      <summary>我的異動<span class="sub" id="mychgSub"></span></summary>
-      <div class="body" id="mychgBody"></div>
-    </details>
-  </section>
+  <p id="moved">原「我的異動」已移至 <a href="https://shihpc.github.io/postmkt/#tab=mychg">盤後分析 › 持股異動</a>(手機版面較適合)</p>
 
   <footer>
     資料來源:FinMind · <a href="https://github.com/shihpc">github.com/shihpc</a>
@@ -175,7 +153,6 @@ function unlock(){
   document.getElementById("gate").remove();
   renderCards();
   loadStatus(); // 解鎖後才抓資料健康狀態(未解鎖不發請求;失敗顯示「查詢失敗(未知)」)
-  loadMyChanges(); // 解鎖後才讀本機持股並抓 taiwan-flows 當日全市場逐檔(無持股則整節不出現)
 }
 
 /* ────────────────────────────────────────────────
@@ -211,7 +188,7 @@ const PROJECTS = [
   },
   {
     name: "盤後分析",
-    desc: "主動ETF · 融資借券 · 當沖 · 鉅額交易",
+    desc: "主動ETF · 融資借券 · 當沖 · 鉅額交易 · 持股異動",
     url:  "https://shihpc.github.io/postmkt/",
     icon: "chart",
     color: ["#3b2168", "#8b5cf6"], // 紫:標示「盤後 / 分析」
@@ -345,209 +322,6 @@ async function loadStatus(){
   } catch (e) {
     /* 渲染階段例外:資料已取得,不當成查詢失敗,靜默略過 */
   }
-}
-
-/* ===== 我的異動(批次三 #18) =====
-   目的:入口站直接提示「我持有的股票今天有沒有相對明顯的變化」,一眼看完再決定要不要進子站。
-   隱私:持股清單只從同 origin localStorage("pm_holdings")(postmkt 寫入,本站唯讀)讀取,
-        **絕不放進任何網路請求的 URL、header 或 body**;本節的外部請求全部是「無參數的固定 GET」
-        (taiwan-flows 的 status.json / data/daily/<YYYYMMDD>.json / latest.json),內容與持股無關,
-        比對完全在瀏覽器端做。
-   誠實原則:**這不是買賣訊號,只是相對變化提醒**;門檻是顯示用可調常數、無回測依據。
-   資料源(2026-09-07 換掉,原本只讀 latest.json —— 那是「缺資料卻呈現正常」的覆蓋率誤報):
-     latest.json 只有各榜前 30 名(ETF 榜前 20),去重後 294 檔,而當日全市場有 2650 檔;
-     以本模組門檻實測當日達門檻者 911 檔,其中 687 檔(75.4%)在 latest.json 查不到,
-     卻被寫成「無顯著異動」——系統性盲區是槓桿/主動式 ETF 與中型股。
-     現在主資料改 data/daily/<YYYYMMDD>.json:全市場 2650 檔、涵蓋率 100%,cols 含
-     code / chg_pct / f_net / t_net 剛好是畫面三欄(gzip 約 82KB);檔名的日期先向
-     status.json(gzip 約 302B)取 sources.daily(退回 date);daily 檔**無股名欄**,
-     股名由 latest.json(gzip 約 19KB)補、與主流程並行,失敗或查無就顯示代號。
-     刻意不抓 meta.json(270KB)——只為股名不值得。
-   三種狀態必須分得開(這是本次必修的核心,不可再混成同一句「沒異動」):
-     ① 有資料且達門檻 → 列進表格
-     ② 有資料但未達門檻 → 「其餘 N 檔未達門檻」
-     ③ 代號不在當日 daily 檔(已下市/停牌/代號打錯) → 「M 檔在當日資料中查無此代號」
-   失敗:status 或 daily 任一支失敗/逾時/形狀不合 → 顯示「無法取得異動資料」,不得靜默當成無異動。 */
-const HOLD_KEY   = "pm_holdings";                       // postmkt 寫入,本站唯讀
-const MYCHG_OPEN_KEY = "hub_mychg_open";                // "1" 展開 / "0" 收合(預設展開)
-const FLOWS_BASE = "https://raw.githubusercontent.com/shihpc/taiwan-flows/main/data/";
-const FLOWS_STATUS_URL = FLOWS_BASE + "status.json";    // 只為取資料日,組出 daily 檔名
-const FLOWS_LATEST_URL = FLOWS_BASE + "latest.json";    // 只為補股名(選配,失敗不影響主流程)
-const flowsDailyUrl = ymd => FLOWS_BASE + "daily/" + ymd + ".json";   // 主資料:全市場逐檔
-const DIAG_URL_BASE = "https://shihpc.github.io/postmkt/#tab=diag&code="; // postmkt hash 路由
-/* 顯示門檻(可調常數,非訊號):任一法人淨買賣達 ±MYCHG_LOT_TH 張,或漲跌達 ±MYCHG_CHG_PCT_TH % */
-const MYCHG_LOT_TH = 100;      // 張
-const MYCHG_CHG_PCT_TH = 3;    // %
-const MYCHG_MAX_ROWS = 5;      // 最多列幾檔
-const MYCHG_TIMEOUT_MS = 8000; // 每支請求各自 8 秒逾時
-
-/* 標準 HTML 逃逸:所有拼進 innerHTML 的字串(持股代號、latest.json 股名)都要過這裡 */
-function esc(s){
-  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
-}
-
-/* 讀本機持股;壞資料一律當成沒有持股(不拋錯) */
-function myHoldings(){
-  let v;
-  try { v = JSON.parse(localStorage.getItem(HOLD_KEY) || "[]"); } catch (e) { return []; }
-  if (!Array.isArray(v)) return [];
-  const out = [], seen = {};
-  v.forEach(h => {
-    if (!h || typeof h !== "object") return;
-    const c = typeof h.c === "string" ? h.c.trim().toUpperCase() : "";
-    if (!c || seen[c]) return;
-    seen[c] = 1; out.push(c);
-  });
-  return out;
-}
-
-/* 固定 URL 的 GET(不帶任何持股資訊)+ 8 秒逾時 + JSON 形狀最低檢查 */
-async function myChgFetchJson(url){
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), MYCHG_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, { signal: ctrl.signal });
-    if (!res.ok) throw new Error("http " + res.status);
-    const j = await res.json();
-    if (!j || typeof j !== "object") throw new Error("shape");
-    return j;
-  } finally { clearTimeout(timer); }
-}
-
-/* 由 data/daily/<YYYYMMDD>.json(cols 欄名 + rows 二維陣列)建 code → {f,t,chg}。
-   欄位語意見 taiwan-flows/CLAUDE.md 的 daily schema:f_net / t_net 為外資 / 投信當日淨買賣(張),
-   chg_pct 為漲跌%。只留持股代號;**沒被收錄的代號不會有 key**,呼叫端據此把
-   「有資料未達門檻」與「當日資料查無此代號」分成兩種狀態。 */
-function myChgDailyIndex(j, codes){
-  const cols = Array.isArray(j.cols) ? j.cols : null;
-  const rows = Array.isArray(j.rows) ? j.rows : null;
-  if (!cols || !rows) throw new Error("shape");
-  const iC = cols.indexOf("code"), iF = cols.indexOf("f_net"),
-        iT = cols.indexOf("t_net"), iP = cols.indexOf("chg_pct");
-  if (iC < 0 || iF < 0 || iT < 0 || iP < 0) throw new Error("cols");
-  const want = {};
-  codes.forEach(c => { want[c] = 1; });
-  const num = v => (typeof v === "number" && isFinite(v)) ? v : null;
-  const idx = {};
-  rows.forEach(r => {
-    if (!Array.isArray(r)) return;
-    const c = typeof r[iC] === "string" ? r[iC].trim().toUpperCase() : "";
-    if (!c || !want[c] || idx[c]) return;
-    idx[c] = { f: num(r[iF]), t: num(r[iT]), chg: num(r[iP]) };
-  });
-  return idx;
-}
-
-/* latest.json 純粹用來補股名(daily 檔無股名欄):走訪 pages 底下所有陣列收 code → name。
-   查不到就讓呼叫端顯示代號,不為股名再抓 270KB 的 meta.json。 */
-function myChgNameIndex(j){
-  const names = {};
-  const pages = (j && j.pages) || {};
-  Object.keys(pages).forEach(p => {
-    const pg = pages[p];
-    if (!pg || typeof pg !== "object") return;
-    Object.keys(pg).forEach(k => {
-      const arr = pg[k];
-      if (!Array.isArray(arr)) return;
-      arr.forEach(r => {
-        if (!r || typeof r !== "object") return;
-        if (typeof r.code === "string" && typeof r.name === "string" && r.name && !names[r.code]) names[r.code] = r.name;
-      });
-    });
-  });
-  return names;
-}
-
-/* 是否算「有異動」(純函式,門檻見上方常數) */
-function myChgSignificant(r){
-  return (r.f != null && Math.abs(r.f) >= MYCHG_LOT_TH) ||
-         (r.t != null && Math.abs(r.t) >= MYCHG_LOT_TH) ||
-         (r.chg != null && Math.abs(r.chg) >= MYCHG_CHG_PCT_TH);
-}
-
-function myChgNum(v, digits){
-  if (v == null) return '<span style="color:var(--muted)">—</span>';
-  const cls = v > 0 ? "up" : (v < 0 ? "down" : "");
-  const txt = (v > 0 ? "+" : "") + v.toFixed(digits);
-  return '<span class="' + cls + '">' + esc(txt) + "</span>";
-}
-
-async function loadMyChanges(){
-  const sec = document.getElementById("mychg");
-  const box = document.getElementById("mychgBox");
-  const body = document.getElementById("mychgBody");
-  const sub = document.getElementById("mychgSub");
-  if (!sec || !box || !body) return;
-
-  const codes = myHoldings();
-  if (!codes.length) return;            // 無持股:整節維持 hidden,入口與原本一模一樣
-
-  box.open = lsGet(MYCHG_OPEN_KEY) !== "0";   // 預設展開
-  box.addEventListener("toggle", () => lsSet(MYCHG_OPEN_KEY, box.open ? "1" : "0"));
-  sub.textContent = "持股 " + codes.length + " 檔";
-  body.textContent = "載入中…";
-  sec.hidden = false;
-
-  /* 股名是選配,和主流程並行跑;失敗一律吞成空索引(顯示代號),不讓它拖垮或誤判主流程 */
-  const namesP = myChgFetchJson(FLOWS_LATEST_URL).then(myChgNameIndex).catch(() => ({}));
-
-  let idx, date;
-  try {
-    const st = await myChgFetchJson(FLOWS_STATUS_URL);
-    const src = st.sources && typeof st.sources.daily === "string" ? st.sources.daily : "";
-    const ds  = src || (typeof st.date === "string" ? st.date : "");
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ds);     // 只接受正規日期才組檔名
-    if (!m) throw new Error("date");
-    const daily = await myChgFetchJson(flowsDailyUrl(m[1] + m[2] + m[3]));
-    idx  = myChgDailyIndex(daily, codes);
-    date = typeof daily.date === "string" ? daily.date : ds;
-  } catch (e) {
-    body.textContent = "無法取得異動資料";   // 不影響五張卡與 /status 狀態列
-    return;
-  }
-  const names = await namesP;
-
-  /* 三分:found(當日資料查得到)/ missing(查無此代號);found 再依門檻切成 sig / 未達門檻 */
-  const found = [], missing = [];
-  codes.forEach(c => {
-    const r = idx[c];
-    if (!r) { missing.push(c); return; }
-    found.push({ code: c, name: names[c] || "", f: r.f, t: r.t, chg: r.chg });
-  });
-  const sig = found.filter(myChgSignificant).sort((a, b) => {
-    const m = r => Math.max(Math.abs(r.f || 0), Math.abs(r.t || 0));
-    return (m(b) - m(a)) || (Math.abs(b.chg || 0) - Math.abs(a.chg || 0)) || (a.code < b.code ? -1 : 1);
-  });
-  const shown = sig.slice(0, MYCHG_MAX_ROWS);
-
-  let html = "";
-  if (shown.length) {
-    html += '<table><thead><tr><th>代號</th><th>名稱</th><th>資料日</th><th>外資(張)</th><th>投信(張)</th><th>漲跌%</th></tr></thead><tbody>';
-    shown.forEach(r => {
-      html += "<tr>" +
-        '<td><a href="' + esc(DIAG_URL_BASE + encodeURIComponent(r.code)) + '" target="_blank" rel="noopener">' + esc(r.code) + "</a></td>" +
-        "<td>" + esc(r.name || r.code) + "</td>" +      // 查不到股名就顯示代號
-        "<td>" + esc(date) + "</td>" +
-        "<td>" + myChgNum(r.f, 1) + "</td>" +
-        "<td>" + myChgNum(r.t, 1) + "</td>" +
-        "<td>" + myChgNum(r.chg, 2) + "</td>" +
-      "</tr>";
-    });
-    html += "</tbody></table>";
-  }
-
-  /* 三種狀態各自一句、分行呈現,不可合併成同一個字串 */
-  const quiet = found.length - sig.length;
-  const extra = sig.length - shown.length;
-  const notes = [];
-  if (quiet > 0) notes.push("其餘 " + quiet + " 檔未達門檻(當日資料查得到,只是變化不到門檻)");
-  if (missing.length) notes.push(missing.length + " 檔在當日資料中查無此代號(已下市/停牌/代號有誤),不代表沒有異動");
-  if (extra > 0) notes.push("另 " + extra + " 檔已達門檻但未列出(最多列 " + MYCHG_MAX_ROWS + " 檔)");
-  notes.push("門檻:法人淨買賣 ±" + MYCHG_LOT_TH + " 張或漲跌 ±" + MYCHG_CHG_PCT_TH +
-             "%,為顯示用可調常數、無回測依據,不是買賣訊號,只是相對變化提醒");
-  notes.push("資料源:taiwan-flows data/daily/" + date + "(全市場逐檔),股名取自 latest.json");
-  html += '<div class="note">' + notes.map(esc).join("<br>") + "</div>";
-  body.innerHTML = html;
 }
 
 /* ===== 啟動:已記住就直接放行,否則掛上密碼門 =====
