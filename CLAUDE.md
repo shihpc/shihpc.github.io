@@ -44,7 +44,7 @@
 <!-- CANON:END v1 -->
 
 「股市雷達 · Dashboard Hub」入口站。**純靜態、無建置流程**：站台內容只有一個
-`index.html`（348 行，2026-09-09 `wc -l` 實測），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
+`index.html`（358 行，2026-09-26 `wc -l` 實測；09-09 為 348 行，加第 6 張卡「股市易經」＋其圖示後 +10），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
 `.github/workflows/canon.yml`，只守 CLAUDE.md 頂端的 CANON 區塊，不產出任何東西。
 線上 https://shihpc.github.io/ 。
 
@@ -71,10 +71,10 @@
 - **「持股異動」搬遷提示列** `<p id="moved">`（grep `<p id="moved">`；CSS 是 grep
   `#moved{margin-top` 起的三條規則，含 `#moved a:hover`，其上兩行為說明註解）：一行靜態連結，指到
   `https://shihpc.github.io/postmkt/#tab=mychg`。**純 HTML、無 JS、無 fetch**，由
-  `body.locked #moved{display:none}`（grep `body.locked`，全檔唯一一行）與五張卡一起藏在密碼門後。
+  `body.locked #moved{display:none}`（grep `body.locked`，全檔唯一一行）與六張卡一起藏在密碼門後。
   見下方「我的異動（已搬走）」節。
 
-## 五張卡（`index.html` grep `const PROJECTS`）
+## 六張卡（`index.html` grep `const PROJECTS`；2026-09-26 由五張加到六張）
 
 | 卡片 | 連往 |
 |------|------|
@@ -82,7 +82,8 @@
 | 盤後法人動態 | https://shihpc.github.io/taiwan-flows/ |
 | 新聞晨報 | https://shihpc.github.io/taiwan-stock-news/ |
 | 盤後分析 | https://shihpc.github.io/postmkt/ |
-| 策略回測 | https://shihpc.github.io/taiwan-backtest/ （`PROJECTS` 內最後一筆；**2026-09-07 起補上 `statusId:"backtest"`**——`/status` 的 backtest 站由 taiwan-flow-live-v2 提供，`loadStatus()` 對缺站本來就 `return` 靜默不掛狀態列，故先加不會壞） |
+| 策略回測 | https://shihpc.github.io/taiwan-backtest/ （**2026-09-07 起補上 `statusId:"backtest"`**——`/status` 的 backtest 站由 taiwan-flow-live-v2 提供，`loadStatus()` 對缺站本來就 `return` 靜默不掛狀態列，故先加不會壞；**2026-09-26 前為 `PROJECTS` 最後一筆**，現為倒數第二） |
+| 股市易經 | https://shihpc.github.io/taiwan-stock-iching/ （`PROJECTS` 內最後一筆，2026-09-26 加入；`icon:"iching"`＝`ICONS` 新 key，六爻圖（地天泰：上三爻斷線、下三爻整線）；`color` 手動釘粉 `#5b2150/#db2777`＝`PALETTE` 唯一未用色（省略會拿到 `PALETTE[5%6]`＝青、與「即時類股動態」撞色）；`statusId:"iching"`＝**taiwan-flow-live-v2 Worker `/status` 的第七站**（2026-09-26 17:44 UTC curl 線上實測回七站，iching `data_date=2026-09-24` `level=yellow`），`loadStatus()` 零改動、走既有 `sites[].id` 比對） |
 
 ## 我的異動（已於 2026-09-09 移除，搬去 postmkt）
 
@@ -109,7 +110,7 @@
   必須自己補一支 `esc()`**（逃 `&<>"'`），不要以為站上已經有一支。
 - **`localStorage` key `hub_mychg_open`（開合狀態）已成孤兒**：程式不再讀寫它，
   舊使用者瀏覽器裡殘留的值無害，**刻意不寫清除碼**（為了刪一個 key 而加開機邏輯不划算）。
-- **入口指引**：五張卡下方新增一行靜態提示 `<p id="moved">`（見「佈局」節），
+- **入口指引**：卡片（當時五張，2026-09-26 起六張）下方新增一行靜態提示 `<p id="moved">`（見「佈局」節），
   「盤後分析」卡的 `desc` 也補上「· 持股異動」。**深連結格式
   `https://shihpc.github.io/postmkt/#tab=mychg`**——postmkt 的 `HASH_TABS` 由 `TABS`
   自動生成，改動 postmkt 的 tab id 會讓這條連結失效。
@@ -123,7 +124,7 @@
    `color` 可省略，省略時由 `PALETTE` 依順序循環分配；`statusId` 可省略，
    填了才會對應 `/status` 顯示健康狀態列。
 2. **既有卡的 `color` 是釘死的**：`index.html` grep `釘原色` 那行註解「綠(釘原色,不受新卡位移影響)」——
-   五張卡都手動指定顏色，就是為了讓新卡插入時既有卡配色不位移。不要為了「統一」而拿掉。
+   六張卡都手動指定顏色（第 6 張「股市易經」2026-09-26 同樣釘死粉色），就是為了讓新卡插入時既有卡配色不位移。不要為了「統一」而拿掉。
 3. **子站有回程連結硬編 `https://shihpc.github.io/`**（例：taiwan-stock-news）——
    若改動 Hub 網址，必須同步各子站的回程連結。
 4. **密碼門**（grep `/* ===== 密碼門`）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
@@ -139,10 +140,14 @@
 ## 驗證方式
 
 ```bash
-python -m http.server 8000   # 開 localhost:8000，過密碼門後確認五張卡渲染且連結可點
+python -m http.server 8000   # 開 localhost:8000，過密碼門後確認六張卡渲染且連結可點
 ```
 
 無測試、無 CI；改完 push 到 main 即由 GitHub Pages 上線。
 **沙箱限制**：本容器的 headless Chromium 連不到外網，`/status` 一律用 Playwright `page.route`
 餵 fixture 驗證（2026-09-09 移除「我的異動」的驗收即如此做：五張卡／狀態列／`#mychg` 不存在／
-console 與 pageerror 零／375・390・1280 三寬度不水平溢出／`#moved` 連結 href 正確，全數通過）。
+console 與 pageerror 零／375・390・1280 三寬度不水平溢出／`#moved` 連結 href 正確，全數通過；
+2026-09-26 加第 6 張卡「股市易經」的驗收同法：fixture 七站含 iching→第 6 張掛「● 資料日」、
+fixture 六站無 iching→第 6 張不掛而其餘五張照常、`/status` 500 與逾時 12 秒→`#statusMsg` 顯示
+「查詢失敗（未知）」，24 項全數通過）。**過密碼門的作法**：從 `index.html` 以 regex 取 `PW_HASH`／`AUTH_KEY`
+兩個常數，`add_init_script` 寫進 localStorage 走真實的啟動判斷分支——腳本與輸出都不得含雜湊字面量。
