@@ -102,6 +102,10 @@
     outline:none;transition:border-color .15s;
   }
   #gate input[type=password]:focus{border-color:var(--accent)}
+  /* 密碼管理器帳號名（2026-10-01）：固定值 hub、唯讀小字，讓同 origin 各站的密碼管理器項目以帳號名區分、不互蓋 */
+  #gate .gateuser{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:.78rem}
+  #gate .gateuser input{width:6em;background:transparent;border:1px dashed var(--muted);color:var(--muted);
+    border-radius:6px;padding:2px 6px;font-size:.78rem;text-align:center;outline:none}
   #gate .remember{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:.88rem;cursor:pointer}
   #gate button{
     background:var(--accent);color:#06122a;border:none;border-radius:12px;
@@ -117,6 +121,9 @@
     <h2>🔒 股市雷達</h2>
     <div class="sub">請輸入密碼進入</div>
     <form id="gateForm">
+      <!-- username 欄（2026-10-01）：type=text＋readonly＋固定值（Firefox 不把 type=hidden 當 username），
+           家族統一帳號名見 postmkt/CLAUDE.md 約定 6；密碼欄不可 readonly（Chrome／Firefox 不填唯讀欄） -->
+      <label class="gateuser">帳號名 <input type="text" name="username" autocomplete="username" value="hub" readonly></label>
       <input type="password" id="pw" inputmode="numeric" autocomplete="current-password" placeholder="密碼" autofocus>
       <label class="remember"><input type="checkbox" id="remember" checked> 記住我(這台裝置免再輸入)</label>
       <button type="submit">進入</button>

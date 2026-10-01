@@ -44,7 +44,7 @@
 <!-- CANON:END v1 -->
 
 「股市雷達 · Dashboard Hub」入口站。**純靜態、無建置流程**：站台內容只有一個
-`index.html`（358 行，2026-09-26 `wc -l` 實測；09-09 為 348 行，加第 6 張卡「股市易經」＋其圖示後 +10），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
+`index.html`（365 行，2026-10-01 `wc -l` 實測；09-26 為 358 行，密碼門補 username 欄 +7；09-09 為 348 行，加第 6 張卡「股市易經」＋其圖示後 +10），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
 `.github/workflows/canon.yml`，只守 CLAUDE.md 頂端的 CANON 區塊，不產出任何東西。
 線上 https://shihpc.github.io/ 。
 
@@ -129,6 +129,10 @@
    若改動 Hub 網址，必須同步各子站的回程連結。
 4. **密碼門**（grep `/* ===== 密碼門`）是前端 SHA-256 比對，註解自承「輕量遮罩,非真正安全」；
    改密碼＝重算 SHA-256 換掉 `PW_HASH` 那一行（grep `const PW_HASH`）。
+   **2026-10-01 起表單多一個 username 欄**（`type="text"` readonly、固定值 `hub`、`autocomplete="username"`；
+   密碼欄仍是 `current-password` 且不可 readonly），讓同 origin（`shihpc.github.io`）上入口站密碼與四站各把 API 金鑰
+   在瀏覽器密碼管理器裡以帳號名分開、不互蓋（家族 username 名單正本見 `postmkt/CLAUDE.md` 約定 6）。
+   代價：使用者原本存的空帳號名密碼項目對不上，要重存一次。比對與記住我邏輯一字未改。
    **不要把雜湊值或密碼寫進任何文件、commit message 或對話輸出。**
 5. **狀態列失敗顯示「查詢失敗（未知）」是刻意的，不要改回靜默**：`/status` 查不到
    （逾時／非 2xx／形狀不合／網路例外）時 `showStatusFail()` 在 `#statusMsg` 顯示中性灰
