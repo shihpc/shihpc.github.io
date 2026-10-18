@@ -78,11 +78,6 @@
   /* /status 失敗訊息列:中性灰、不帶紅黃綠語意(「查不到」≠「有問題」),預設隱藏 */
   #statusMsg{margin-top:20px;color:var(--muted);font-size:.8rem;text-align:center}
   #statusMsg[hidden]{display:none}
-  /* 「持股異動」搬遷提示列:原「我的異動」區塊已於 2026-09-09 移除,改由 postmkt 的「持股異動」tab 承接
-     (原表格 6 欄,手機只看得到前 2 欄;postmkt 那邊是 4 欄版面) */
-  #moved{margin-top:20px;color:var(--muted);font-size:.82rem;text-align:center;line-height:1.6}
-  #moved a{color:var(--accent);text-decoration:none}
-  #moved a:hover{text-decoration:underline}
   footer{margin-top:56px;color:var(--muted);font-size:.82rem;text-align:center}
   footer a{color:var(--accent);text-decoration:none}
 
@@ -113,7 +108,7 @@
   }
   #gate button:hover{opacity:.9}
   #gate .err{color:#ff6b6b;font-size:.85rem;min-height:1.1em}
-  body.locked main,body.locked header,body.locked footer,body.locked #moved{display:none}
+  body.locked main,body.locked header,body.locked footer{display:none}
 </style>
 </head>
 <body class="locked">
@@ -138,8 +133,6 @@
 
   <main class="grid" id="grid"></main>
   <div id="statusMsg" hidden></div>
-
-  <p id="moved">原「我的異動」已移至 <a href="https://shihpc.github.io/postmkt/#tab=mychg">盤後分析 › 持股異動</a>(手機版面較適合)</p>
 
   <footer>
     資料來源:FinMind · <a href="https://github.com/shihpc">github.com/shihpc</a>

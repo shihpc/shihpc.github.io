@@ -46,13 +46,13 @@
 <!-- CANON:END v1 -->
 
 「股市雷達 · Dashboard Hub」入口站。**純靜態、無建置流程**：站台內容只有一個
-`index.html`（365 行，2026-10-01 `wc -l` 實測；09-26 為 358 行，密碼門補 username 欄 +7；09-09 為 348 行，加第 6 張卡「股市易經」＋其圖示後 +10），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
+`index.html`（358 行，2026-10-18 `wc -l` 實測，移除「持股異動」搬遷提示列 −7；10-01 為 365 行；09-26 為 358 行，密碼門補 username 欄 +7；09-09 為 348 行，加第 6 張卡「股市易經」＋其圖示後 +10），GitHub Pages 直接從 main root 服務。唯一的 workflow 是
 `.github/workflows/canon.yml`，只守 CLAUDE.md 頂端的 CANON 區塊，不產出任何東西。
 線上 https://shihpc.github.io/ 。
 
 ## 佈局
 
-`index.html` 一檔到底（CSS/JS 內嵌），**六段結構**（2026-09-09 更正：原寫「三段」但其下一直是 6 個項目，是加項目時漏改的計數）：
+`index.html` 一檔到底（CSS/JS 內嵌），**五段結構**（2026-10-18 移除第六段「持股異動」搬遷提示列；09-09 曾更正原寫「三段」的漏計）：
 
 - `<head>` 門面 meta（grep `name="description"`／`name="theme-color"`／`rel="icon"`／
   `rel="preconnect"`，四行相鄰）：`description`／`theme-color`（取 `--bg` 的 `#0b1120`）／
@@ -70,11 +70,6 @@
   `sites[].id` 顯示「● 資料日 MM/DD」；fetch 失敗／逾時（8 秒）／非 2xx／JSON 不合形狀
   → 卡片不掛狀態列，改在 `#statusMsg`（grep `id="statusMsg"`）顯示一行中性灰
   「資料狀態：查詢失敗（未知）」（語意見「改動注意」第 5 條）
-- **「持股異動」搬遷提示列** `<p id="moved">`（grep `<p id="moved">`；CSS 是 grep
-  `#moved{margin-top` 起的三條規則，含 `#moved a:hover`，其上兩行為說明註解）：一行靜態連結，指到
-  `https://shihpc.github.io/postmkt/#tab=mychg`。**純 HTML、無 JS、無 fetch**，由
-  `body.locked #moved{display:none}`（grep `body.locked`，全檔唯一一行）與六張卡一起藏在密碼門後。
-  見下方「我的異動（已搬走）」節。
 
 ## 六張卡（`index.html` grep `const PROJECTS`；2026-09-26 由五張加到六張）
 
@@ -112,7 +107,7 @@
   必須自己補一支 `esc()`**（逃 `&<>"'`），不要以為站上已經有一支。
 - **`localStorage` key `hub_mychg_open`（開合狀態）已成孤兒**：程式不再讀寫它，
   舊使用者瀏覽器裡殘留的值無害，**刻意不寫清除碼**（為了刪一個 key 而加開機邏輯不划算）。
-- **入口指引**：卡片（當時五張，2026-09-26 起六張）下方新增一行靜態提示 `<p id="moved">`（見「佈局」節），
+- **入口指引**：卡片下方原有一行靜態提示 `<p id="moved">`，**2026-10-18 依使用者要求移除**（連同其 CSS 與 `body.locked #moved` 選擇器）；
   「盤後分析」卡的 `desc` 也補上「· 持股異動」。**深連結格式
   `https://shihpc.github.io/postmkt/#tab=mychg`**——postmkt 的 `HASH_TABS` 由 `TABS`
   自動生成，改動 postmkt 的 tab id 會讓這條連結失效。
