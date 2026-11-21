@@ -80,7 +80,7 @@
 | 新聞晨報 | https://shihpc.github.io/taiwan-stock-news/ |
 | 盤後分析 | https://shihpc.github.io/postmkt/ |
 | 策略回測 | https://shihpc.github.io/taiwan-backtest/ （**2026-09-07 起補上 `statusId:"backtest"`**——`/status` 的 backtest 站由 taiwan-flow-live-v2 提供，`loadStatus()` 對缺站本來就 `return` 靜默不掛狀態列，故先加不會壞；**2026-09-26 前為 `PROJECTS` 最後一筆**，現為倒數第二） |
-| 股市易經 | https://shihpc.github.io/taiwan-stock-iching/ （`PROJECTS` 內最後一筆，2026-09-26 加入；`icon:"iching"`＝`ICONS` 新 key，六爻圖（地天泰：上三爻斷線、下三爻整線）；`color` 手動釘粉 `#5b2150/#db2777`＝`PALETTE` 唯一未用色（省略會拿到 `PALETTE[5%6]`＝青、與「即時類股動態」撞色）；`statusId:"iching"`＝**taiwan-flow-live-v2 Worker `/status` 的第七站**（2026-09-26 17:44 UTC curl 線上實測回七站，iching `data_date=2026-09-24` `level=yellow`），`loadStatus()` 零改動、走既有 `sites[].id` 比對） |
+| 股市易經 | https://shihpc.github.io/taiwan-stock-iching/ （`PROJECTS` 內最後一筆，2026-09-26 加入；`icon:"iching"`＝`ICONS` 新 key，六爻圖（地天泰：上三爻斷線、下三爻整線）；`color` 手動釘粉 `#5b2150/#db2777`＝`PALETTE` 唯一未用色（省略會拿到 `PALETTE[5%6]`＝青、與「即時類股動態」撞色）；`statusId:"iching"`＝**taiwan-flow-live-v2 Worker `/status` 的第七站**（2026-09-26 17:44 UTC curl 線上實測回七站，iching `data_date=2026-09-24` `level=yellow`），`loadStatus()` 零改動、走既有 `sites[].id` 比對；**2026-11-21 `desc` 補列該站後三個分頁**「總分排序 · 選多空 · 條件篩選」（股市易經裁定 #74 的 74d，使用者核准改入口站；只改字串，375／390／1280 實測卡片不溢出）） |
 
 ## 我的異動（已於 2026-09-09 移除，搬去 postmkt）
 
