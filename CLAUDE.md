@@ -160,7 +160,7 @@ python -m http.server 8000   # 開 localhost:8000，過密碼門後確認六張�
 ```
 
 無測試、無 CI；改完 push 到 main 即由 GitHub Pages 上線。
-**沙箱限制**：本容器的 headless Chromium 連不到外網，`/status` 一律用 Playwright `page.route`
+**線上驗證**：雲端 session 的瀏覽器 2026-11-28 實測可開線上頁面（原記「連不到外網」已過期；環境限制引用前先實測）。要重現特定 `/status` 情境時仍用 Playwright `page.route`
 餵 fixture 驗證（2026-09-09 移除「我的異動」的驗收即如此做：五張卡／狀態列／`#mychg` 不存在／
 console 與 pageerror 零／375・390・1280 三寬度不水平溢出／`#moved` 連結 href 正確，全數通過；
 2026-09-26 加第 6 張卡「股市易經」的驗收同法：fixture 七站含 iching→第 6 張掛「● 資料日」、
